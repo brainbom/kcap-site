@@ -84,8 +84,24 @@ function sleep(ms) {
 // 텍스트 유틸
 // ---------------------------------------------------------------------------
 
+// 게시판이 엔티티를 두 번 이스케이프하거나 세미콜론 없이 쓰면(&quotNEXT, &amp;quot;) cheerio를 거친 뒤에도
+// '&quot' 같은 글자가 제목에 남는다. 흔한 이름 엔티티와 숫자 엔티티만 한 번 더 푼다.
+const ENTITIES = { quot: '"', amp: '&', lt: '<', gt: '>', apos: "'", nbsp: ' ', middot: '·', hellip: '…', lsquo: '‘', rsquo: '’', ldquo: '“', rdquo: '”', ndash: '–', mdash: '—' };
+function decodeEntities(s) {
+  let out = String(s || '');
+  for (let i = 0; i < 2 && /&(?:#\d|#x[0-9a-f]|[a-z]{2})/i.test(out); i++) {
+    out = out
+      .replace(/&#x([0-9a-f]{1,6});?/gi, (m, h) => { const n = parseInt(h, 16); return n > 0 && n < 0x110000 ? String.fromCodePoint(n) : m; })
+      .replace(/&#(\d{1,7});?/g, (m, d) => { const n = +d; return n > 0 && n < 0x110000 ? String.fromCodePoint(n) : m; })
+      .replace(/&(quot|amp|lt|gt|apos|nbsp|middot|hellip|lsquo|rsquo|ldquo|rdquo|ndash|mdash);/g, (m, k) => ENTITIES[k])
+      // 세미콜론이 빠진 꼴은 옛 HTML 엔티티 다섯 개만, 뒤에 소문자가 이어지지 않을 때만 푼다 ('&Ltd' · '&quotation'은 그대로)
+      .replace(/&(quot|amp|lt|gt|nbsp)(?![a-z;])/g, (m, k) => ENTITIES[k]);
+  }
+  return out;
+}
+
 function clean(s) {
-  return String(s || '')
+  return decodeEntities(s)
     .replace(/ /g, ' ')
     .replace(/[​-‍﻿]/g, '')
     .replace(/\s+/g, ' ')
@@ -475,6 +491,7 @@ module.exports = {
   cheerio,
   sleep,
   clean,
+  decodeEntities,
   textOf,
   absUrl,
   truncate,
