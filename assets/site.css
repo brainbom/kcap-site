@@ -870,7 +870,7 @@ body[class*="m-"] .tabs a.on{border-color:var(--acc);color:var(--ink)}
 /* 연도별 활동: 해마다 그 해 도록의 색 */
 #y2024 .yy{color:var(--c-orange)}#y2023 .yy{color:var(--c-blue)}#y2023 .yy small{color:var(--c-green)}#y2022 .yy{color:#1f3f8a}
 .bk-link{display:inline-block;margin-top:14px;font-weight:800;font-size:14px;border-bottom:2px solid currentColor;padding-bottom:1px}
-#y2024 .bk-link{color:var(--c-orange)}#y2023 .bk-link{color:var(--c-green)}#y2022 .bk-link{color:var(--c-blue)}
+#y2024 .bk-link{color:#B4561A}#y2023 .bk-link{color:var(--c-green)}#y2022 .bk-link{color:var(--c-blue)}
 
 /* ---------- 전시 도록 서가 ---------- */
 .shelf{padding:70px 0 50px}
