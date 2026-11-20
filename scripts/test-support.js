@@ -2,7 +2,7 @@
 // 실행: node scripts/test-support.js  (GitHub Actions가 api/support.js가 바뀔 때마다 자동 실행)
 // 실제로 화면에 섞여 나왔던 사업과, 반드시 남아야 하는 사업을 그대로 적어 둔다.
 // 새로 잘못 섞인 사업을 발견하면 SHOULD_DROP에 [이름, 지원대상]을 한 줄 추가하고 규칙을 고친다.
-const { forArtists } = require('../api/support.js')._test;
+const { forArtists, staleYear, youthInRegion, REGIONS } = require('../api/support.js')._test;
 
 const SHOULD_KEEP = [
   ['예술인 창작기반지원(창작준비, 창작공간 임차료, 창작공간 기획프로그램)', '경기도 주소 예술인·예술단체'],
@@ -47,4 +47,29 @@ let fail = 0;
 for (const [n, w] of SHOULD_KEEP) if (!forArtists(n, w)) { fail++; console.error('빠지면 안 되는데 빠짐:', n); }
 for (const [n, w] of SHOULD_DROP) if (forArtists(n, w)) { fail++; console.error('빠져야 하는데 남음:', n); }
 console.log(`예술인 대상 판정: ${SHOULD_KEEP.length + SHOULD_DROP.length}건 중 ${fail}건 실패`);
+
+// 정부24 옛 정보 거르기 (2026-11-14): [이름, 신청기한, 빼야 하나]
+const STALE = [
+  ['(헬로우 아트랩) 문화예술교육 프로그램 연구 개발 지원', '2023. 4월', true],
+  ['2025 문화예술교육 배달지원사업', '2025. 3월', true],
+  ['2025 충북 예술인파견지원-예술로', '접수기관 별 상이', true],
+  ['예술활동준비금 지원 사업(舊 창작준비금 지원 사업)', '매년 상반기 내 공고 및 접수 예정', false],
+  ['K-Art 청년 창작자 지원사업(2026~2027)', '', false],
+  ['문화예술지원사업', '매년 1~2월', false],
+];
+let f2 = 0;
+for (const [n, p, want] of STALE) if (staleYear(n, p, 2026) !== want) { f2++; console.error('옛 정보 판정 틀림:', n, p); }
+// 온통청년 지역 거르기: 전남을 골랐을 때 [정책, 남아야 하나]
+const nation = Array.from({ length: 230 }, (_, i) => String(11000 + i)).join(',');
+const REGION_CASES = [
+  [{ zipCd: '', sprvsnInstCdNm: '남동구', rgtrHghrkInstCdNm: '인천광역시' }, false],
+  [{ zipCd: '', sprvsnInstCdNm: '문화체육관광부' }, true],
+  [{ zipCd: nation, sprvsnInstCdNm: '충청북도 문화체육관광국' }, true],
+  [{ zipCd: '46810', sprvsnInstCdNm: '강진군' }, true],
+  [{ zipCd: '', sprvsnInstCdNm: '전남광주통합특별시 북구' }, true],
+  [{ zipCd: '28200', sprvsnInstCdNm: '남동구' }, false],
+];
+for (const [p, want] of REGION_CASES) if (youthInRegion(p, REGIONS.jeonnam) !== want) { f2++; console.error('지역 판정 틀림:', JSON.stringify(p).slice(0, 80)); }
+console.log(`옛 정보 · 지역 판정: ${STALE.length + REGION_CASES.length}건 중 ${f2}건 실패`);
+fail += f2;
 process.exit(fail ? 1 : 0);
